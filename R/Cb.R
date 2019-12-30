@@ -2,7 +2,6 @@
 
 
 Cb_output.template<-list(Cb=NA,e_b=NA,e_max_b1b2=NA,p=NA,q=NA)
-
 class(Cb_output.template)<-"Cb_output"
 
 print.Cb_output<-function(x)
@@ -51,7 +50,12 @@ e_max_b1_b2<-function(B, dumb=FALSE, ordered=FALSE)
 
 
 
-
+#' Simple, parametric calculation of Cb.
+#' @param B A numberic vector.
+#' @return This function returns Cb as 1-E(B1)/E(max(B2,B3)), where B1, B2, and B3 are random draws from the empirical distribution of B.
+#' @examples
+#' B<-runif(1000)); Cb.simple(B)
+#' @export
 Cb.simple<-function(B)
 {
   a<-mean(B)
@@ -84,7 +88,22 @@ Cb.simple<-function(B)
 
 
 
-
+#' Cb calculations for a logistic regression model.
+#' @param reg_object An object of class 'glm' that contains the resuls of the logit model.
+#' @param tx_var A string containing the name of the treatment indicator variable.
+#' @param semi_parametric Optional (default=FALSE). If TRUE, the semi-parametric estimator for Cb will be returned.
+#' @return This function returns an object of class Cb_output, which includes Cb as a member.
+#' @examples
+#' data("rct_data")
+#' #Creating a binary variable indicating whether an exacerbation happened during the first 6 months.
+#' #Because everyone is followed for at least 6 months, there is no censoring.
+#' rct_data[,'b_exac']<-rct_data[,'tte']<0.5
+#' rct_data[which(is.na(rct_data[,'b_exac'])),'b_exac']<-FALSE
+#'
+#' reg.logostic<-glm(formula = b_exac ~ tx + sgrq + prev_hosp + prev_ster + fev1, data = rct_data, family = binomial(link="logit"))
+#' res.logistic<-Cb.logistic(reg.logostic,tx_var = "tx", semi_parametric = T)
+#' print(res.logistic)
+#' @export
 Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 {
   if(!inherits(reg_object,"glm")) stop("reg_object should be an object of class glm.")
@@ -106,7 +125,7 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 
   if(semi_parametric)
   {
-    outcome_var<-as.character(reg_object$call$formula[[2]])
+    outcomes<-reg_object$y
 
     B<-y0-y1
 
@@ -120,13 +139,15 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 
     id0<-which(data[,tx_var]==0)
     data[,'y0__']<-0
-    data[,'t0__']<-1
-    data[id0,'y0__']<-data[id0,outcome_var]
+    data[,'t0__']<-0
+    data[id0,'t0__']<-1
+    data[id0,'y0__']<-outcomes[id0]
 
     id1<-which(data[,tx_var]==1)
     data[,'y1__']<-0
-    data[,'t1__']<-1
-    data[id1,'y1__']<-data[id1,outcome_var]
+    data[,'t1__']<-0
+    data[id1,'t1__']<-1
+    data[id1,'y1__']<-outcomes[id1]
 
     data<-data[o,]
     B<-B[o]
@@ -150,7 +171,7 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 
     data[,'q_sp__']<-tmp0-tmp1
 
-    out$e_b<-(sum(data[,'y0__'])*n/sum(data[,'t0__'])-sum(data[,'y1__'])*n/sum(data[,'t1__']))/n
+    out$e_b<-sum(data[,'y0__'])/sum(data[,'t0__'])-sum(data[,'y1__'])/sum(data[,'t1__'])
     out$e_max_b1b2<-(2*sum(data[,'q_sp__']))/n/n-out$e_b/n
     out$Cb<-1-out$e_b/out$e_max_b1b2
     out$p<-(1:n)/n
@@ -171,7 +192,17 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 
 
 
-
+#' Cb calculations for a Poisson (or negative binomial) regression model.
+#' @param reg_object An object of class 'glm' that contains the resuls of the Poisson/NegBin model.
+#' @param tx_var A string containing the name of the treatment indicator variable.
+#' @param semi_parametric Optional (default=FALSE). If TRUE, the semi-parametric estimator for Cb will be returned.
+#' @return This function returns an object of class Cb_output, which includes Cb as a member.
+#' @examples
+#' data("rct_data")
+#' reg<-glm(formula = n_exac ~ tx + sgrq + prev_hosp + prev_ster + fev1, data = rct_data, family = poisson(link="log"), offset=ln_time)
+#' res.Poisson<-Cb.Poisson(reg,tx_var = "tx", semi_parametric = T)
+#' res.Poisson
+#' @export
 Cb.Poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
 {
   if(!inherits(reg_object,"glm")) stop("reg_object should be an object of class glm.")
@@ -267,30 +298,50 @@ Cb.Poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
 
 
 
+
+#' Cb calculations for a Cox proportional hazard model.
+#' @param reg_object An object of class 'coxph' that contains the model. IMPORTANT: the coxph function call for fitting the model must have model=TRUE as an input argument such that the underlying data becomes part of the returned object (this is the case by default for glm)
+#' @param tx_var A string containing the name of the treatment indicator variable.
+#' @param semi_parametric Optional (default=FALSE). If TRUE, the semi-parametric estimator for Cb will be returned.
+#' @return This function returns an object of class Cb_output, which includes Cb as a member.
+#' @examples
+#' data("rct_data")
+#' #Create an event indicator and update the tte (time-to-event) variable to be equal to follpow-up time for censored individuals.
+#' event<-(!is.na(rct_data[,'tte']))*1
+#' ids<-which(event==0)
+#' rct_data[ids,'tte']<-rct_data[ids,'time']
+#' rct_data['event']<-event
+#'
+#' reg.coxph<-coxph(Surv(time=tte,event=event) ~ tx + tx:female + tx:age + sgrq + prev_hosp + prev_ster + fev1, data=rct_data, model=TRUE)
+#' res.coxph<-Cb.coxph(reg.coxph,tx_var = "tx",semi_parametric = T)
+#' @export
 Cb.coxph<-function(reg_object,tx_var,semi_parametric=FALSE)
 {
   if(!inherits(reg_object,"coxph")) stop("reg_object should be an object of class coxph.")
   if(is.null(tx_var)) stop("Treatment variable label (tx_var) is not speficied.")
-  if(!exists(reg_object$model)) stop("No model data available in the regression object. Run coxph with model=TRUE argument.")
+  if(is.null(reg_object$model)) stop("No model data available in the regression object. Run coxph with model=TRUE argument.")
 
   out<-Cb_output.template
 
   data<-reg_object$model
+  time_var<-as.character(reg_object$formula[[2]][[2]])
 
   n<-dim(data)[1]
 
   newdata0<-data
   newdata0[,tx_var]<-0
-  y0<-predict.glm(reg_object,newdata = newdata0, type = "response")
+  newdata0[,time_var]<-1
+  y0<-predict(reg_object,newdata = newdata0, type = "expected")
 
-  newdata1<-data
+  newdata1<-newdata0
   newdata1[,tx_var]<-1
-  newdata1[,offset_var]<-0
-  y1<-predict.glm(reg_object,newdata = newdata1, type="response")
+  y1<-predict(reg_object,newdata = newdata1, type="expected")
 
   if(semi_parametric)
   {
-    outcome_var<-as.character(reg_object$call$formula[[2]])
+    x<-as.matrix(reg_object$y)
+    times<-x[,1]
+    events<-x[,2]
 
     B<-y0-y1
 
@@ -305,14 +356,14 @@ Cb.coxph<-function(reg_object,tx_var,semi_parametric=FALSE)
     id0<-which(data[,tx_var]==0)
     data[,'y0__']<-0
     data[,'t0__']<-0
-    data[id0,'y0__']<-data[id0,outcome_var]
-    data[id0,'t0__']<-exp(data[id0,offset_var])
+    data[id0,'y0__']<-events[id0]
+    data[id0,'t0__']<-times[id0]
 
     id1<-which(data[,tx_var]==1)
     data[,'y1__']<-0
     data[,'t1__']<-0
-    data[id1,'y1__']<-data[id1,outcome_var]
-    data[id1,'t1__']<-exp(data[id1,offset_var])
+    data[id1,'y1__']<-events[id1]
+    data[id1,'t1__']<-times[id1]
 
     data<-data[o,]
     B<-B[o]
@@ -343,7 +394,6 @@ Cb.coxph<-function(reg_object,tx_var,semi_parametric=FALSE)
     out$q<-data[,'q_sp__']
 
     return(out)
-
   }
   else
   {
