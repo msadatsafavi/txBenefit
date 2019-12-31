@@ -1,14 +1,15 @@
 #Includes all the files for Cb calculations
 
-
 Cb_output.template<-list(Cb=NA,e_b=NA,e_max_b1b2=NA,p=NA,q=NA)
 class(Cb_output.template)<-"Cb_output"
 
+#' @export
 print.Cb_output<-function(x)
 {
   print(paste0("Cb=",x$Cb," - ","e_b=",x$e_b," - ","e_max_b1b2=",x$e_max_b1b2))
 }
 
+#' @export
 plot.Cb_output<-function(x)
 {
   plot(x$p,x$q,type='l',xlab="p",ylab="q")
