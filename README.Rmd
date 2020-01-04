@@ -1,16 +1,22 @@
 ---
-title: "Tutorial for Cb estimation"
-output: rmarkdown::html_vignette
-
-vignette: >
-  %\VignetteIndexEntry{Tutorial for Cb estimation}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+output: github_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
 ```
+# txBenefit
+
+<!-- badges: start -->
+<!-- badges: end -->
+
 
 This tutotial provides background information and stepwise tutorial for Cb calculations.
 
