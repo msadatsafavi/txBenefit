@@ -1,5 +1,19 @@
 #Includes all the files for Cb calculations
 
+#' txBenefit: A package for calculations pertaining to Concentration of Benefit (Cb) index.
+#'
+#' The txBenefit  package provides three categories of important functions:
+#' Cb.simple(), Cb.logistic, Cb.Poisson, and cb.coxph
+#'
+#'
+#' @docType package
+#' @name txBenefit
+NULL
+
+
+
+
+
 Cb_output.template<-list(Cb=NA,e_b=NA,e_max_b1b2=NA,p=NA,q=NA)
 class(Cb_output.template)<-"Cb_output"
 
@@ -16,6 +30,11 @@ plot.Cb_output<-function(x)
 }
 
 
+#' @export
+lines.Cb_output<-function(x)
+{
+  lines(x$p,x$q,type='l',xlab="p",ylab="q")
+}
 
 
 e_max_b1_b2<-function(B, dumb=FALSE, ordered=FALSE)
@@ -110,6 +129,9 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
   if(!inherits(reg_object,"glm")) stop("reg_object should be an object of class glm.")
   if(is.null(tx_var)) stop("Treatment variable label (tx_var) is not speficied.")
 
+  tx_values<-unique(reg_object$model[,tx_var])
+  if(length(tx_values)!=2) stop("Treatment variable must have two and only two values.")
+
   out<-Cb_output.template
 
   data<-reg_object$model
@@ -117,11 +139,11 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
   n<-dim(data)[1]
 
   newdata0<-data
-  newdata0[,tx_var]<-0
+  newdata0[,tx_var]<-tx_values[1]
   y0<-predict.glm(reg_object,newdata = newdata0, type = "response")
 
   newdata1<-data
-  newdata1[,tx_var]<-1
+  newdata1[,tx_var]<-tx_values[2]
   y1<-predict.glm(reg_object,newdata = newdata1, type="response")
 
   if(semi_parametric)
@@ -133,18 +155,18 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
     if(mean(B)<0)
     {
       B<- -B
-      data[,tx_var]<- 1-data[,tx_var]
+      data[,tx_var]<- sum(tx_values)-data[,tx_var]
     }
 
     o<-order(B,runif(n),decreasing=TRUE)
 
-    id0<-which(data[,tx_var]==0)
+    id0<-which(data[,tx_var]==tx_values[1])
     data[,'y0__']<-0
     data[,'t0__']<-0
     data[id0,'t0__']<-1
     data[id0,'y0__']<-outcomes[id0]
 
-    id1<-which(data[,tx_var]==1)
+    id1<-which(data[,tx_var]==tx_values[2])
     data[,'y1__']<-0
     data[,'t1__']<-0
     data[id1,'t1__']<-1
@@ -179,7 +201,6 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
     out$q<-data[,'q_sp__']
 
     return(out)
-
   }
   else
   {
@@ -204,29 +225,25 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 #' res.Poisson<-Cb.Poisson(reg,tx_var = "tx", semi_parametric = T)
 #' res.Poisson
 #' @export
-Cb.Poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
+Cb.poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
 {
   if(!inherits(reg_object,"glm")) stop("reg_object should be an object of class glm.")
   if(is.null(tx_var)) stop("Treatment variable label (tx_var) is not speficied.")
 
   out<-Cb_output.template
 
-  data<-reg_object$model
+  data<-reg_object$data
 
   n<-dim(data)[1]
 
-  offset_var<-as.character(reg_object$call$offset)
-  data[,offset_var]<-data[,"(offset)"]
-
   newdata0<-data
   newdata0[,tx_var]<-0
-  newdata0[,offset_var]<-0
-  y0<-predict.glm(reg_object,newdata = newdata0, type = "response")
-
+  y0<-predict.glm(reg_object,newdata = newdata0, type = "link")-reg_object$offset
+  y0<-reg_object$family$linkinv(y0)
   newdata1<-data
   newdata1[,tx_var]<-1
-  newdata1[,offset_var]<-0
-  y1<-predict.glm(reg_object,newdata = newdata1, type="response")
+  y1<-predict.glm(reg_object,newdata = newdata1, type="link")-reg_object$offset
+  y1<-reg_object$family$linkinv(y1)
 
   if(semi_parametric)
   {
@@ -316,7 +333,7 @@ Cb.Poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
 #' reg.coxph<-coxph(Surv(time=tte,event=event) ~ tx + tx:female + tx:age + sgrq + prev_hosp + prev_ster + fev1, data=rct_data, model=TRUE)
 #' res.coxph<-Cb.coxph(reg.coxph,tx_var = "tx",semi_parametric = T)
 #' @export
-Cb.coxph<-function(reg_object,tx_var,semi_parametric=FALSE)
+Cb.cox<-function(reg_object,tx_var,semi_parametric=FALSE)
 {
   if(!inherits(reg_object,"coxph")) stop("reg_object should be an object of class coxph.")
   if(is.null(tx_var)) stop("Treatment variable label (tx_var) is not speficied.")

@@ -1,0 +1,150 @@
+---
+title: "Tutorial for Cb estimation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tutorial for Cb estimation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This tutotial provides background information and stepwise tutorial for Cbcalculations.
+
+##What is Cb?
+
+Consider a risk model that predicts the rate or risk of an outcome (e.g., 5-year mortality due to breast cancer). The risk model estimates the risk / rate of the event given an individual's characteristics. The discriminatory performance of such a model is often communicated in terms of C-statistic (or area under the curve of the receiver operating characteristic curve).
+
+Often times, we are interested in using patient characteristics to decide whether a patient should receive treatment or not. Instead of a risk mode, in this circumstance we can develop a model directly predicting treatment benefit:
+
+$$b=E(Y|X,A=1)-E(Y|X,A=0)$$
+    
+Cb is a threshold-free index that describes to what extent covariates X can discriminate among individuals who will differently benefit from treatment, given their covariates.
+
+In a nutshell, Cb is conceptually equal to C-statistic for the risk models.
+
+C-statistic has a probabilistic interpretations: consider two patients, with one experiencing the event and the other one not. C-statistic is the probability that the risk model correctly predicts the individual who will experience the outcome to have a higher predicted risk.
+
+Similarly, Cb has a probabilistic interpretation: randomly select two patients from the population, and consider the two scenarios: A) give one patient the treatment at random, B) give the patient with higher expected benefit (from the model). Cb of q% means that scenario B is associated with loss of efficiency of scenario A compared with scenario B.
+
+$$C_b=1-E(B)/E(max(B_1,B_2))$$
+
+
+| First Header  | C-statistic    | Cb                           |
+| :------------ | :----------------------------------------:  | ----------------------------------:         |
+| Application   | Models for risk| Models for treatment benefit |
+| Probabilistic interpretation    | Randomly select a pair of individuals, one that experiences the outconme and one that does not. C is the probability that the risk model predicts a higher risk for the individual with event    | Randomly select a pair of individuals. Consider the two scenarios: A) give treatment to one at random, B) give treatment to the one with the higher predicted benefit. Cb is the relative loss of efficiency of  scenario A compared with scenario B               |
+| Range     | [0.5,1]  | [0,1] |
+| Interpretation     | The model with higher C is better  | The model with higher Cb is better |
+
+
+
+##How the package rowks
+
+The package provides simple functions for calculating Cb for different regression models. 
+
+
+###Direct calculation of Cb when the vector of benefits are available.
+Cb.simple() is for such an estimation method.
+
+```{R}
+library(txBenefit)
+B<-runif(100)
+res<-Cb.simple(B)
+res
+```
+
+In effect, this function equal creating all possible pairs within the vector B, and estimating the maximum within each pair.
+
+We can also call the plot function on the output
+```{R}
+plot(res)
+```
+
+
+Now let's focus on a more realistic example.
+```{R}
+data("rct_data")
+```
+
+Let's take a look at the first few rows:
+
+```{R echo=FALSE}
+knitr::kable(rct_data[1:5,])
+```
+
+We first create a binary variable indicating whether an exacerbation occured within the first 6 months.
+```{R}
+rct_data[,'b_exac']<-rct_data[,'tte']<0.5
+rct_data[which(is.na(rct_data[,'b_exac'])),'b_exac']<-FALSE
+
+reg.logostic<-glm(formula = b_exac ~ tx + sgrq + prev_hosp + prev_ster + fev1, data = rct_data, family = binomial(link="logit"))
+
+summary(reg.logostic)
+```
+
+Indeed, we can estimate the probability of outcome for each patient under each treatment allocation
+
+```{R}
+new_data0<-rct_data
+new_data0[,'tx']<-0
+new_data1<-rct_data
+new_data1[,'tx']<-1
+B<-predict.glm(reg.logostic, newdata=new_data0, type="response")-predict.glm(reg.logostic, newdata =new_data1, type="response")
+hist(B)
+Cb.simple(B)
+```
+
+
+###Cb.logistic() for Cb calculation based on a logit model
+The above-mentioned calculations are already provided in the Cb.logistic function
+
+```{R}
+res.logistic<-Cb.logistic(reg.logostic,tx_var = "tx")
+res.logistic
+```
+
+We can estimate Cb non-parametrically as well. 
+
+```{R}
+res.logistic.NP<-Cb.logistic(reg.logostic,tx_var = "tx",semi_parametric = T)
+res.logistic.NP
+plot(res.logistic.NP)
+lines(res.logistic)
+```
+
+
+###Cb.poisson() for count models
+
+First let's do this directly
+
+```{R}
+reg.poisson<-glm(formula = n_exac ~ tx + tx:sgrq + prev_hosp + prev_ster + fev1 + offset(log(time)), data = rct_data, family = poisson(link="log"))
+
+summary(reg.poisson)
+
+new_data0<-rct_data
+new_data0[,'tx']<-0
+new_data0[,'time']<-1
+new_data1<-rct_data
+new_data1[,'tx']<-1
+new_data1[,'time']<-1
+
+B<-predict.glm(reg.poisson, newdata=new_data0, type="response")-predict.glm(reg.poisson, newdata =new_data1, type="response")
+hist(B)
+Cb.simple(B)
+```
+
+Again, like in the case of Cb.logistic(), we have a shotcut function that does all these
+
+```{R}
+res.poisson<-Cb.poisson(reg.poisson,tx_var = "tx")
+res.poisson
+```
+
+
+
+Important notes: Cb cannnot currently be calculated for Cox models that have time-dependent covariates, nor for the models with strata
+

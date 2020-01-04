@@ -1,14 +1,16 @@
 Package: txBenefit
-Title: What the Package Does (One Line, Title Case)
+Title: Estimating Concentration of Benefit (Cb) index and related quantities. 
 Version: 0.0.0.9000
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Mohsen",
+           family = "Sadatsafavi",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+           email = "msafavi@mail.ubc.ca",
+           comment = c(ORCID = "0000-0002-0419-7862"))
+Description: This package is for estimating the Concentration of Benefit (Cb) index as described in the Statistics in Medicine paper.
+License: Free
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1

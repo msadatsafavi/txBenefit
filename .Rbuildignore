@@ -1,3 +1,5 @@
 ^txBenefit\.Rproj$
 ^\.Rproj\.user$
 ^example$
+^doc$
+^Meta$
