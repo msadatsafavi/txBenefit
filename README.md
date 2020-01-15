@@ -7,8 +7,7 @@ txBenefit
 <!-- badges: end -->
 This tutotial provides background information and stepwise tutorial for Cb calculations.
 
-What is Cb?
------------
+### What is Cb?
 
 Consider a risk model that predicts the rate or risk of an outcome (e.g., 5-year mortality due to breast cancer). The risk model estimates the risk / rate of the event given an individual's characteristics. The discriminatory performance of such a model is often communicated in terms of C-statistic (or area under the curve of the receiver operating characteristic curve).
 
@@ -82,14 +81,14 @@ The package provides simple functions for calculating Cb for different regressio
 
 Cb.simple() is for such an estimation method.
 
-In the example below, we simply create vector B of randomly generated numbers.
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD In the example below, we simply create vector B of randomly generated numbers.
 
 ``` r
 library(txBenefit)
 B<-runif(100)
 res<-Cb.simple(B)
 print(res)
-#> [1] "Cb=0.230758901433629 - e_b=0.50987125416752 - e_max_b1b2=0.662823729930399"
+#> [1] "Cb=0.261142255540923 - e_b=0.477142604878172 - e_max_b1b2=0.645784128888696"
 ```
 
 In effect, this function equals to creating all possible pairs within the vector B, and estimating the maximum within each pair.
@@ -224,6 +223,28 @@ Cb.simple(B)
 #> [1] "Cb=0.0561854696958405 - e_b=0.0704551471377305 - e_max_b1b2=0.074649356282982"
 ```
 
+### Cb.logistic() for Cb calculation based on a logit model
+
+The above-mentioned calculations are already provided in the Cb.logistic function
+
+``` r
+res.logistic<-Cb.logistic(reg.logostic,tx_var = "tx")
+res.logistic
+#> [1] "Cb=0.0561854696958405 - e_b=0.0704551471377305 - e_max_b1b2=0.074649356282982"
+```
+
+We can estimate Cb non-parametrically as well.
+
+``` r
+res.logistic.NP<-Cb.logistic(reg.logostic,tx_var = "tx",semi_parametric = T)
+res.logistic.NP
+#> [1] "Cb=0.354867544499266 - e_b=0.0713706169291377 - e_max_b1b2=0.110629400707707"
+plot(res.logistic.NP)
+lines(res.logistic)
+```
+
+<img src="man/figures/README-unnamed-chunk-11-1.png" width="100%" />
+
 ### Cb.poisson() for count models
 
 First let's do this directly
@@ -272,7 +293,7 @@ B<-predict.glm(reg.poisson, newdata=new_data0, type="response")-predict.glm(reg.
 hist(B)
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-12-1.png" width="100%" />
 
 ``` r
 Cb.simple(B)

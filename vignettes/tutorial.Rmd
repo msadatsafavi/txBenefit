@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This tutotial provides background information and stepwise tutorial for Cb calculations.
 
-##What is Cb?
+###What is Cb?
 
 Consider a risk model that predicts the rate or risk of an outcome (e.g., 5-year mortality due to breast cancer). The risk model estimates the risk / rate of the event given an individual's characteristics. The discriminatory performance of such a model is often communicated in terms of C-statistic (or area under the curve of the receiver operating characteristic curve).
 
@@ -58,6 +58,7 @@ The package provides simple functions for calculating Cb for different regressio
 ###Direct calculation of Cb when the vector of benefits are available.
 Cb.simple() is for such an estimation method.
 
+<<<<<<< HEAD
 In the example below, we simply create vector B of randomly generated numbers.
 
 ```{R}
@@ -159,6 +160,22 @@ Cb.simple(B)
 ```
 
 
+###Cb.logistic() for Cb calculation based on a logit model
+The above-mentioned calculations are already provided in the Cb.logistic function
+
+```{R}
+res.logistic<-Cb.logistic(reg.logostic,tx_var = "tx")
+res.logistic
+```
+
+We can estimate Cb non-parametrically as well. 
+
+```{R}
+res.logistic.NP<-Cb.logistic(reg.logostic,tx_var = "tx",semi_parametric = T)
+res.logistic.NP
+plot(res.logistic.NP)
+lines(res.logistic)
+```
 
 
 ###Cb.poisson() for count models
