@@ -4,7 +4,7 @@
 \alias{Cb.cox}
 \title{Cb calculations for a Cox proportional hazard model.}
 \usage{
-Cb.cox(reg_object, tx_var, semi_parametric = FALSE)
+Cb.cox(reg_object, tx_var, semi_parametric = FALSE, time = 1)
 }
 \arguments{
 \item{reg_object}{An object of class 'coxph' that contains the model. IMPORTANT: the coxph function call for fitting the model must have model=TRUE as an input argument such that the underlying data becomes part of the returned object (this is the case by default for glm)}
@@ -12,6 +12,8 @@ Cb.cox(reg_object, tx_var, semi_parametric = FALSE)
 \item{tx_var}{A string containing the name of the treatment indicator variable.}
 
 \item{semi_parametric}{Optional (default=FALSE). If TRUE, the semi-parametric estimator for Cb will be returned.}
+
+\item{time}{Optional (default=1). The value of time at which Cb is calculated.}
 }
 \value{
 This function returns an object of class Cb_output, which includes Cb as a member.

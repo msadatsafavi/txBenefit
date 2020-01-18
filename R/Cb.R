@@ -13,14 +13,15 @@ NULL
 
 
 
-
-Cb_output.template<-list(Cb=NA,e_b=NA,e_max_b1b2=NA,p=NA,q=NA)
+#the S3 class!
+Cb_output.template<-list(Cb=NA,e_b=NA,e_max_b1b2=NA,Gini=NA,AUCi=NA,p=NA,q=NA)
 class(Cb_output.template)<-"Cb_output"
 
 #' @export
 print.Cb_output<-function(x)
 {
-  print(paste0("Cb=",x$Cb," - ","e_b=",x$e_b," - ","e_max_b1b2=",x$e_max_b1b2))
+  cat("Cb=",x$Cb,"\ne_b=",x$e_b,"\ne_max_b1b2=",x$e_max_b1b2,"\nGini=",x$Gini,"\nAUCi=",x$AUCi,"\nData length:",length(x$q))
+  return(invisible(x$Cb))
 }
 
 #' @export
@@ -97,6 +98,8 @@ Cb.simple<-function(B)
   out$Cb<-1-a/b
   out$e_b<-a
   out$e_max_b1b2<-b
+  out$Gini<-(b-a)/a
+  out$AUCi<-b/a/2
   out$p<-(1:n)/n
   out$q<-cumsum(B)
   return(out)
@@ -218,6 +221,7 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 #' @param reg_object An object of class 'glm' that contains the resuls of the Poisson/NegBin model.
 #' @param tx_var A string containing the name of the treatment indicator variable.
 #' @param semi_parametric Optional (default=FALSE). If TRUE, the semi-parametric estimator for Cb will be returned.
+#' @param time Optional (default=1). The value of time at which Cb is calculated.
 #' @return This function returns an object of class Cb_output, which includes Cb as a member.
 #' @examples
 #' data("rct_data")
@@ -225,7 +229,7 @@ Cb.logistic<-function(reg_object,tx_var,semi_parametric=FALSE)
 #' res.Poisson<-Cb.Poisson(reg,tx_var = "tx", semi_parametric = T)
 #' res.Poisson
 #' @export
-Cb.poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
+Cb.poisson<-function(reg_object,tx_var,semi_parametric=FALSE,time=1)
 {
   if(!inherits(reg_object,"glm")) stop("reg_object should be an object of class glm.")
   if(is.null(tx_var)) stop("Treatment variable label (tx_var) is not speficied.")
@@ -238,11 +242,11 @@ Cb.poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
 
   newdata0<-data
   newdata0[,tx_var]<-0
-  y0<-predict.glm(reg_object,newdata = newdata0, type = "link")-reg_object$offset
+  y0<-predict.glm(reg_object,newdata = newdata0, type = "link")-reg_object$offset+reg_object$family$linkfun(time)
   y0<-reg_object$family$linkinv(y0)
   newdata1<-data
   newdata1[,tx_var]<-1
-  y1<-predict.glm(reg_object,newdata = newdata1, type="link")-reg_object$offset
+  y1<-predict.glm(reg_object,newdata = newdata1, type="link")-reg_object$offset+reg_object$family$linkfun(time)
   y1<-reg_object$family$linkinv(y1)
 
   if(semi_parametric)
@@ -321,6 +325,7 @@ Cb.poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
 #' @param reg_object An object of class 'coxph' that contains the model. IMPORTANT: the coxph function call for fitting the model must have model=TRUE as an input argument such that the underlying data becomes part of the returned object (this is the case by default for glm)
 #' @param tx_var A string containing the name of the treatment indicator variable.
 #' @param semi_parametric Optional (default=FALSE). If TRUE, the semi-parametric estimator for Cb will be returned.
+#' @param time Optional (default=1). The value of time at which Cb is calculated.
 #' @return This function returns an object of class Cb_output, which includes Cb as a member.
 #' @examples
 #' data("rct_data")
@@ -333,7 +338,7 @@ Cb.poisson<-function(reg_object,tx_var,semi_parametric=FALSE)
 #' reg.coxph<-coxph(Surv(time=tte,event=event) ~ tx + tx:female + tx:age + sgrq + prev_hosp + prev_ster + fev1, data=rct_data, model=TRUE)
 #' res.coxph<-Cb.coxph(reg.coxph,tx_var = "tx",semi_parametric = T)
 #' @export
-Cb.cox<-function(reg_object,tx_var,semi_parametric=FALSE)
+Cb.cox<-function(reg_object,tx_var,semi_parametric=FALSE, time=1)
 {
   if(!inherits(reg_object,"coxph")) stop("reg_object should be an object of class coxph.")
   if(is.null(tx_var)) stop("Treatment variable label (tx_var) is not speficied.")
@@ -348,7 +353,7 @@ Cb.cox<-function(reg_object,tx_var,semi_parametric=FALSE)
 
   newdata0<-data
   newdata0[,tx_var]<-0
-  newdata0[,time_var]<-1
+  newdata0[,time_var]<-time
   y0<-predict(reg_object,newdata = newdata0, type = "expected")
 
   newdata1<-newdata0
