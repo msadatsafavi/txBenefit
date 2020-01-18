@@ -11,17 +11,7 @@ This tutotial provides background information and stepwise tutorial for Cb calcu
 
 Consider a risk model that predicts the rate or risk of an outcome (e.g., 5-year mortality due to breast cancer). The risk model estimates the risk / rate of the event given an individual's characteristics. The discriminatory performance of such a model is often communicated in terms of C-statistic (or area under the curve of the receiver operating characteristic curve).
 
-Often times, we are interested in using patient characteristics to decide whether a patient should receive treatment or not. Instead of a risk mode, in this circumstance we can develop a model directly predicting treatment benefit:
-
-*b* = *E*(*Y*|*X*, *A* = 1)−*E*(*Y*|*X*, *A* = 0)
-
-Cb is a threshold-free index that describes to what extent covariates X can discriminate among individuals who will differently benefit from treatment, given their covariates.
-
-In a nutshell, Cb is conceptually equal to C-statistic for risk models.
-
-If B1, B2, and B3 are random draws from the distibution of b (as defined in the above equation), then
-
-*C*<sub>*b*</sub> = 1 − *E*(*B*<sub>1</sub>)/*E*(*m**a**x*(*B*<sub>2</sub>, *B*<sub>3</sub>))
+Sometimes our interest is in using covariates to predict the benefit of treatment (rather than the risk). Cb is a summary metric that quantifies to what extend a model predicts treatment benefit.
 
 The table below compares and contrasts C and Cb statstics.
 
@@ -62,6 +52,19 @@ The table below compares and contrasts C and Cb statstics.
 </tbody>
 </table>
 
+Formal definition of Cb
+-----------------------
+
+Let b be the benefit of treatment on the decision scale (e.g., the absolute risk reduction with treatment). Often times, this benefit is estimated from a risk model. Let Y be the outcome of interest, X the set of covariates, and A the treatment indicator. A risk model can be used to predict treatment benefit in this circumstance we can develop a model directly predicting treatment benefit:
+
+*b* = *E*(*Y*|*X*, *A* = 1)−*E*(*Y*|*X*, *A* = 0)
+
+Cb is a threshold-free index that describes to what extent covariates X can discriminate among individuals who will differently benefit from treatment, given their covariates.
+
+If B1, B2, and B3 are random draws from the distibution of b (as defined in the above equation), then
+
+*C*<sub>*b*</sub> = 1 − *E*(*B*<sub>1</sub>)/*E*(*m**a**x*(*B*<sub>2</sub>, *B*<sub>3</sub>))
+
 Installation
 ------------
 
@@ -81,19 +84,28 @@ The package provides simple functions for calculating Cb for different regressio
 
 Cb.simple() is for such an estimation method.
 
-&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD In the example below, we simply create vector B of randomly generated numbers.
+In the example below, we simply create vector B of randomly generated numbers.
 
 ``` r
 library(txBenefit)
 B<-runif(100)
 res<-Cb.simple(B)
 print(res)
-#> [1] "Cb=0.261142255540923 - e_b=0.477142604878172 - e_max_b1b2=0.645784128888696"
+#> Cb= 0.2501833 
+#> e_b= 0.5069978 
+#> e_max_b1b2= 0.6761623 
+#> Gini= 0.3336593 
+#> AUCi= 0.6668296 
+#> Data length: 100
 ```
 
 In effect, this function equals to creating all possible pairs within the vector B, and estimating the maximum within each pair.
 
-Now let's focus on a more realistic example. The package comes with a simulated randomized clinical trial (RCT) data, named rct\_data.
+### Cb calculations for different regresion frameworks
+
+The package comes with functions that help you calculate Cb for different type of regression models. These function accept a fitted regresion object and a few extra parameters and calculate Cb.
+
+Let's focus on a more realistic example. The package comes with a simulated randomized clinical trial (RCT) data, named rct\_data.
 
 ``` r
 data("rct_data")
@@ -113,31 +125,74 @@ Let's take a look at the first few rows:
 
 This is a hypothetical RCT of two treatments for Chronic Obstructive Pulmonary Disease (COPD). COPD is a chronic disease that comes with episodes of intensified activity, called exacerbations. The benefit of treatment is in reducing the rate of such exacerbations.
 
-The columns are as follows:
+The columns are as follows.
 
-tx: treatment assignement variable (0: placebo, 1: treatment)
-
-female: 1 for female and 0 for male
-
-age: age in years at time of randomization
-
-prev\_hosp: history of COPD-related hospitalization in the previous 12 months (a predictor of future exacerbation), 0: no history, 1: positive history
-
-prev\_ster: history of COPD-related hospitalization in the previous 12 months (a predictor of future exacerbation), 0: no history, 1: positive history
-
-fev1: Forced expiratory volume at one second, a measure of lung capacity
-
-sgrq: St. George Respiratory Questionnaire score: a measure of functional capacity in COPD
-
-time: total follow-up time in years (maximum 1 year)
-
-tte: time to first exacerbation in years (NA if no exacerbation)
-
-n\_exac: total number of exacerbations during follow-up
-
-### Cb calculations for different regresion frameworks
-
-The package comes with functions that help you calculate Cb for different type of regression models. These function accept a fitted regresion object and a few extra parameters and calculate Cb.
+<table style="width:83%;">
+<colgroup>
+<col width="19%" />
+<col width="13%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Variable</th>
+<th align="center">Type</th>
+<th align="right">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">tx</td>
+<td align="center">binary</td>
+<td align="right">treatment assignement variable (0: placebo, 1: treatment)</td>
+</tr>
+<tr class="even">
+<td align="left">female</td>
+<td align="center">binary</td>
+<td align="right">1 for female and 0 for male</td>
+</tr>
+<tr class="odd">
+<td align="left">age</td>
+<td align="center">continuous</td>
+<td align="right">age in years at time of randomization</td>
+</tr>
+<tr class="even">
+<td align="left">prev_hosp</td>
+<td align="center">binary</td>
+<td align="right">history of COPD-related hospitalization in the previous 12 months</td>
+</tr>
+<tr class="odd">
+<td align="left">prev_ster</td>
+<td align="center">binary</td>
+<td align="right">history of COPD-related hospitalization in the previous 12 months</td>
+</tr>
+<tr class="even">
+<td align="left">fev1</td>
+<td align="center">continuous</td>
+<td align="right">Forced expiratory volume at one second, a measure of lung capacity</td>
+</tr>
+<tr class="odd">
+<td align="left">sgrq</td>
+<td align="center">continuous</td>
+<td align="right">St. George Respiratory Questionnaire score</td>
+</tr>
+<tr class="even">
+<td align="left">time</td>
+<td align="center">continuous</td>
+<td align="right">total follow-up time in years (maximum 1 year)</td>
+</tr>
+<tr class="odd">
+<td align="left">tte</td>
+<td align="center">continuous</td>
+<td align="right">time to first exacerbation in years (NA if no exacerbation)</td>
+</tr>
+<tr class="even">
+<td align="left">n_exac</td>
+<td align="center">discrete</td>
+<td align="right">total number of exacerbations during follow-up</td>
+</tr>
+</tbody>
+</table>
 
 #### Logistic regression
 
@@ -190,7 +245,12 @@ Now we call the Cb.logistic funciton. This function has two mandatory parameters
 ``` r
 res.logistic<-Cb.logistic(reg.logostic,tx_var = "tx")
 print(res.logistic)
-#> [1] "Cb=0.0561854696958405 - e_b=0.0704551471377305 - e_max_b1b2=0.074649356282982"
+#> Cb= 0.05618547 
+#> e_b= 0.07045515 
+#> e_max_b1b2= 0.07464936 
+#> Gini= 0.0595302 
+#> AUCi= 0.5297651 
+#> Data length: 1108
 ```
 
 The main outout is Cb.
@@ -200,12 +260,19 @@ Cb.logistic (and similar functions) calculate Cb parametrically. The package inc
 ``` r
 res.logistic.NP<-Cb.logistic(reg.logostic,tx_var = "tx",semi_parametric = T)
 print(res.logistic.NP)
-#> [1] "Cb=0.354867544499266 - e_b=0.0713706169291377 - e_max_b1b2=0.110629400707707"
+#> Cb= 0.3548675 
+#> e_b= 0.07137062 
+#> e_max_b1b2= 0.1106294 
+#> Gini= NA 
+#> AUCi= NA 
+#> Data length: 1108
 ```
 
 ##### What happens under the hood?
 
-Indeed, we can estimate the probability of outcome for each patient under each treatment allocation
+Cb.logistic() and other functions estimate the outcome for each subject in the data under treatment and no treatment scenarios, and then alculate the vector b as the difference, then they call the Cb.simple() function.
+
+Below we do this manually.
 
 ``` r
 new_data0<-rct_data
@@ -213,41 +280,20 @@ new_data0[,'tx']<-0
 new_data1<-rct_data
 new_data1[,'tx']<-1
 B<-predict.glm(reg.logostic, newdata=new_data0, type="response")-predict.glm(reg.logostic, newdata =new_data1, type="response")
-hist(B)
+print(Cb.simple(B))
+#> Cb= 0.05618547 
+#> e_b= 0.07045515 
+#> e_max_b1b2= 0.07464936 
+#> Gini= 0.0595302 
+#> AUCi= 0.5297651 
+#> Data length: 1108
 ```
-
-<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
-
-``` r
-Cb.simple(B)
-#> [1] "Cb=0.0561854696958405 - e_b=0.0704551471377305 - e_max_b1b2=0.074649356282982"
-```
-
-### Cb.logistic() for Cb calculation based on a logit model
-
-The above-mentioned calculations are already provided in the Cb.logistic function
-
-``` r
-res.logistic<-Cb.logistic(reg.logostic,tx_var = "tx")
-res.logistic
-#> [1] "Cb=0.0561854696958405 - e_b=0.0704551471377305 - e_max_b1b2=0.074649356282982"
-```
-
-We can estimate Cb non-parametrically as well.
-
-``` r
-res.logistic.NP<-Cb.logistic(reg.logostic,tx_var = "tx",semi_parametric = T)
-res.logistic.NP
-#> [1] "Cb=0.354867544499266 - e_b=0.0713706169291377 - e_max_b1b2=0.110629400707707"
-plot(res.logistic.NP)
-lines(res.logistic)
-```
-
-<img src="man/figures/README-unnamed-chunk-11-1.png" width="100%" />
 
 ### Cb.poisson() for count models
 
-First let's do this directly
+Cb.poisson() calculates Cb from count models (Poisson and negative binomial). Note that unlie the logistic model, here follow-up time is relevant too. Cb.poission() by default estimates Cb at one unit of time.
+
+Our plan for the trial data is to fit a model that associates predictor to the number of exacerbations during the follow-up time.
 
 ``` r
 reg.poisson<-glm(formula = n_exac ~ tx + tx:sgrq + prev_hosp + prev_ster + fev1 + offset(log(time)), data = rct_data, family = poisson(link="log"))
@@ -281,7 +327,24 @@ summary(reg.poisson)
 #> AIC: 1984.6
 #> 
 #> Number of Fisher Scoring iterations: 5
+```
 
+Once the reggression object is fitted, we call Cb.poisson() passing the regression object and the name of the treatment variable.
+
+``` r
+res.poisson<-Cb.poisson(reg.poisson,tx_var = "tx")
+print(res.poisson)
+#> Cb= 0.1287493 
+#> e_b= 0.1660044 
+#> e_max_b1b2= 0.1905358 
+#> Gini= 0.1477752 
+#> AUCi= 0.5738876 
+#> Data length: 1108
+```
+
+Again, the Cb.poission() function estimates the difference in counterfactual outcomes for each patient, and calls Cb.simple(). Not that to do this manually in this context, we need to set the follow-up time for each subject to 1.
+
+``` r
 new_data0<-rct_data
 new_data0[,'tx']<-0
 new_data0[,'time']<-1
@@ -290,22 +353,82 @@ new_data1[,'tx']<-1
 new_data1[,'time']<-1
 
 B<-predict.glm(reg.poisson, newdata=new_data0, type="response")-predict.glm(reg.poisson, newdata =new_data1, type="response")
-hist(B)
+print(Cb.simple(B))
+#> Cb= 0.1287493 
+#> e_b= 0.1660044 
+#> e_max_b1b2= 0.1905358 
+#> Gini= 0.1477752 
+#> AUCi= 0.5738876 
+#> Data length: 1108
 ```
 
-<img src="man/figures/README-unnamed-chunk-12-1.png" width="100%" />
+### Cb.cox() for Cox proportional hazard model
+
+Cb.cox() estimates Cb from a proportional hazards model. Like Cb.poission(), the length of time matters in the value of Cb, and Cb.cox() estimates Cb at one unit of time.
+
+Our plan for the trial data is to estimate the effect of covariates on redicting time to the first event. txBenefit is compatible with the Cox proportional hazard model implemented in the survial package.
+
+We create an event indicator and update the tte (time-to-event) variable to be equal to follpow-up time for censored individuals.
 
 ``` r
-Cb.simple(B)
-#> [1] "Cb=0.128749276222577 - e_b=0.166004421215108 - e_max_b1b2=0.19053576276571"
+ library("survival")
+ event<-(!is.na(rct_data[,'tte']))*1
+ ids<-which(event==0)
+ rct_data[ids,'tte']<-rct_data[ids,'time']
+ rct_data['event']<-event
 ```
 
-Again, like in the case of Cb.logistic(), we have a shotcut function that does all these
+Now wre fit the Cox model calling the coxph() function. However, AN IMPORTANT DIFFERENCE is that the object that coxph() by defualt does not contain the original data (unlike glm()), which is needed for the calculations. As such, we have to call coxph() with an additional argument model=TRUE.
 
 ``` r
-res.poisson<-Cb.poisson(reg.poisson,tx_var = "tx")
-res.poisson
-#> [1] "Cb=0.128749276222577 - e_b=0.166004421215108 - e_max_b1b2=0.19053576276571"
+reg.coxph<-coxph(Surv(time=tte,event=event) ~ tx + tx:female + tx:age + sgrq + prev_hosp + prev_ster + fev1, data=rct_data, model=TRUE)
+
+summary(reg.coxph)
+#> Call:
+#> coxph(formula = Surv(time = tte, event = event) ~ tx + tx:female + 
+#>     tx:age + sgrq + prev_hosp + prev_ster + fev1, data = rct_data, 
+#>     model = TRUE)
+#> 
+#>   n= 1108, number of events= 413 
+#> 
+#>                coef exp(coef)  se(coef)      z Pr(>|z|)    
+#> tx         0.255575  1.291204  0.544894  0.469 0.639044    
+#> sgrq       0.490846  1.633698  0.315023  1.558 0.119203    
+#> prev_hosp  0.379077  1.460936  0.104630  3.623 0.000291 ***
+#> prev_ster -0.122554  0.884658  0.144538 -0.848 0.396491    
+#> fev1      -0.000233  0.999767  0.102541 -0.002 0.998187    
+#> tx:female  0.017177  1.017325  0.151408  0.113 0.909675    
+#> tx:age    -0.009026  0.991015  0.008315 -1.085 0.277733    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 
+#>           exp(coef) exp(-coef) lower .95 upper .95
+#> tx           1.2912     0.7745    0.4438     3.757
+#> sgrq         1.6337     0.6121    0.8811     3.029
+#> prev_hosp    1.4609     0.6845    1.1901     1.793
+#> prev_ster    0.8847     1.1304    0.6664     1.174
+#> fev1         0.9998     1.0002    0.8177     1.222
+#> tx:female    1.0173     0.9830    0.7561     1.369
+#> tx:age       0.9910     1.0091    0.9750     1.007
+#> 
+#> Concordance= 0.579  (se = 0.014 )
+#> Rsquare= 0.026   (max possible= 0.994 )
+#> Likelihood ratio test= 29.06  on 7 df,   p=1e-04
+#> Wald test            = 28.33  on 7 df,   p=2e-04
+#> Score (logrank) test = 28.62  on 7 df,   p=2e-04
 ```
 
-Important notes: Cb cannnot currently be calculated for Cox models that have time-dependent covariates, nor for the models with strata
+Once this is done, we call the related Cb function:
+
+``` r
+ res.coxph<-Cb.cox(reg.coxph,tx_var = "tx")
+ print(res)
+#> Cb= 0.2501833 
+#> e_b= 0.5069978 
+#> e_max_b1b2= 0.6761623 
+#> Gini= 0.3336593 
+#> AUCi= 0.6668296 
+#> Data length: 100
+```
+
+Important note: Cb cannnot currently be calculated for Cox models that have time-dependent covariates, nor for the models with strata
