@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+
 This tutotial provides background information and stepwise tutorial for Cb calculations.
 
 ###What is Cb?
@@ -97,7 +98,7 @@ This is a hypothetical RCT of two treatments for Chronic Obstructive Pulmonary D
 The columns are as follows.
 
 | Variable  | Type    | Description                           |
-| :------------ | :-------:  | :-----------------------------------------------         |
+| :------------ | :-------:  | :----------------------------------         |
 | tx   | binary | Treatment assignment variable (0: placebo, 1: treatment) |
 | female | binary | 1 for female and 0 for male |
 | age | continuous | Age in years at time of randomization |
@@ -229,5 +230,5 @@ Once this is done, we call the related Cb function:
  print(res)
 ```
 
-Important note: Cb cannot currently be calculated for Cox models that have time-dependent covariates, nor for the models with strata
+Important note: Cb cannot currently be calculated for Cox models that have time-dependent covariates, nor for the models with strata.
 

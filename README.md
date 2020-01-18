@@ -91,11 +91,11 @@ library(txBenefit)
 B<-runif(100)
 res<-Cb.simple(B)
 print(res)
-#> Cb= 0.2202663 
-#> e_b= 0.5109042 
-#> e_max_b1b2= 0.6552291 
-#> Gini= 0.2824891 
-#> AUCi= 0.6412445 
+#> Cb= 0.2676818 
+#> e_b= 0.4596051 
+#> e_max_b1b2= 0.627603 
+#> Gini= 0.3655267 
+#> AUCi= 0.6827634 
 #> Data length: 100
 ```
 
@@ -127,11 +127,11 @@ This is a hypothetical RCT of two treatments for Chronic Obstructive Pulmonary D
 
 The columns are as follows.
 
-<table>
+<table style="width:83%;">
 <colgroup>
 <col width="19%" />
 <col width="13%" />
-<col width="67%" />
+<col width="50%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -377,12 +377,12 @@ Once this is done, we call the related Cb function:
 ``` r
  res.coxph<-Cb.cox(reg.coxph,tx_var = "tx")
  print(res)
-#> Cb= 0.2202663 
-#> e_b= 0.5109042 
-#> e_max_b1b2= 0.6552291 
-#> Gini= 0.2824891 
-#> AUCi= 0.6412445 
+#> Cb= 0.2676818 
+#> e_b= 0.4596051 
+#> e_max_b1b2= 0.627603 
+#> Gini= 0.3655267 
+#> AUCi= 0.6827634 
 #> Data length: 100
 ```
 
-Important note: Cb cannot currently be calculated for Cox models that have time-dependent covariates, nor for the models with strata
+Important note: Cb cannot currently be calculated for Cox models that have time-dependent covariates, nor for the models with strata.
