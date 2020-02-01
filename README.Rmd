@@ -19,6 +19,8 @@ knitr::opts_chunk$set(
 
 This tutotial provides background information and stepwise tutorial for Cb calculations.
 
+IMPORTANT NOTE: These are the early days of this package. If you find a bug, please contact the developer (Mohsen Sadatsafavi - msafavi@mail.ubc.ca). Your efforts in making this package better are appreciated.
+
 ###What is Cb?
 
 Consider a risk model that predicts the rate or risk of an outcome (e.g., 5-year mortality due to breast cancer). The risk model estimates the risk / rate of the event given an individual's characteristics. The discriminatory performance of such a model is often communicated in terms of C-statistic (or area under the curve of the receiver operating characteristic curve).
