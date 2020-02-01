@@ -7,6 +7,8 @@ txBenefit
 <!-- badges: end -->
 This tutotial provides background information and stepwise tutorial for Cb calculations.
 
+IMPORTANT NOTE: These are the early days of this package. If you find a bug, please contact the developer (Mohsen Sadatsafavi - <msafavi@mail.ubc.ca>). Your efforts in making this package better are appreciated.
+
 ### What is Cb?
 
 Consider a risk model that predicts the rate or risk of an outcome (e.g., 5-year mortality due to breast cancer). The risk model estimates the risk / rate of the event given an individual's characteristics. The discriminatory performance of such a model is often communicated in terms of C-statistic (or area under the curve of the receiver operating characteristic curve).
@@ -91,11 +93,11 @@ library(txBenefit)
 B<-runif(100)
 res<-Cb.simple(B)
 print(res)
-#> Cb= 0.2676818 
-#> e_b= 0.4596051 
-#> e_max_b1b2= 0.627603 
-#> Gini= 0.3655267 
-#> AUCi= 0.6827634 
+#> Cb= 0.2700992 
+#> e_b= 0.4715285 
+#> e_max_b1b2= 0.6460172 
+#> Gini= 0.3700491 
+#> AUCi= 0.6850246 
 #> Data length: 100
 ```
 
@@ -342,6 +344,7 @@ We create an event indicator and update the tte (time-to-event) variable to be e
 
 ``` r
  library("survival")
+#> Warning: package 'survival' was built under R version 3.5.3
  event<-(!is.na(rct_data[,'tte']))*1
  ids<-which(event==0)
  rct_data[ids,'tte']<-rct_data[ids,'time']
@@ -359,16 +362,16 @@ print(reg.coxph)
 #>     tx:age + sgrq + prev_hosp + prev_ster + fev1, data = rct_data, 
 #>     model = TRUE)
 #> 
-#>                coef exp(coef)  se(coef)     z       p
-#> tx         0.255575  1.291204  0.544894  0.47 0.63904
-#> sgrq       0.490846  1.633698  0.315023  1.56 0.11920
-#> prev_hosp  0.379077  1.460936  0.104630  3.62 0.00029
-#> prev_ster -0.122554  0.884658  0.144538 -0.85 0.39649
-#> fev1      -0.000233  0.999767  0.102541  0.00 0.99819
-#> tx:female  0.017177  1.017325  0.151408  0.11 0.90968
-#> tx:age    -0.009025  0.991015  0.008315 -1.09 0.27773
+#>                coef exp(coef)  se(coef)      z        p
+#> tx         0.255575  1.291204  0.544894  0.469 0.639044
+#> sgrq       0.490846  1.633698  0.315023  1.558 0.119203
+#> prev_hosp  0.379077  1.460936  0.104630  3.623 0.000291
+#> prev_ster -0.122554  0.884658  0.144538 -0.848 0.396491
+#> fev1      -0.000233  0.999767  0.102541 -0.002 0.998187
+#> tx:female  0.017177  1.017325  0.151408  0.113 0.909675
+#> tx:age    -0.009026  0.991015  0.008315 -1.085 0.277733
 #> 
-#> Likelihood ratio test=29.06  on 7 df, p=1e-04
+#> Likelihood ratio test=29.06  on 7 df, p=0.0001412
 #> n= 1108, number of events= 413
 ```
 
@@ -377,11 +380,11 @@ Once this is done, we call the related Cb function:
 ``` r
  res.coxph<-Cb.cox(reg.coxph,tx_var = "tx")
  print(res)
-#> Cb= 0.2676818 
-#> e_b= 0.4596051 
-#> e_max_b1b2= 0.627603 
-#> Gini= 0.3655267 
-#> AUCi= 0.6827634 
+#> Cb= 0.2700992 
+#> e_b= 0.4715285 
+#> e_max_b1b2= 0.6460172 
+#> Gini= 0.3700491 
+#> AUCi= 0.6850246 
 #> Data length: 100
 ```
 
